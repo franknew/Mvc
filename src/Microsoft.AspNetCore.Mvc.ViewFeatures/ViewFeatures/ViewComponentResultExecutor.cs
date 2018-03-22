@@ -105,6 +105,7 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
                 response.StatusCode = result.StatusCode.Value;
             }
 
+
             using (var writer = new HttpResponseStreamWriter(response.Body, resolvedContentTypeEncoding))
             {
                 var viewContext = new ViewContext(
@@ -115,12 +116,26 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
                     writer,
                     _htmlHelperOptions);
 
+                OnExecuting(viewContext);
+
                 // IViewComponentHelper is stateful, we want to make sure to retrieve it every time we need it.
                 var viewComponentHelper = context.HttpContext.RequestServices.GetRequiredService<IViewComponentHelper>();
                 (viewComponentHelper as IViewContextAware)?.Contextualize(viewContext);
 
                 var viewComponentResult = await GetViewComponentResult(viewComponentHelper, _logger, result);
                 viewComponentResult.WriteTo(writer, _htmlEncoder);
+            }
+        }
+
+        protected virtual void OnExecuting(ViewContext viewContext)
+        {
+            var filters = viewContext.ActionDescriptor.FilterDescriptors;
+            for (var i = 0; i < filters.Count; i++)
+            {
+                if (filters[i].Filter is IViewComponentExecutionCallback callback)
+                {
+                    callback.OnViewComponentExecuting(viewContext);
+                }
             }
         }
 

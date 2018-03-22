@@ -10,6 +10,9 @@ namespace MvcSandbox.Controllers
         [ModelBinder]
         public string Id { get; set; }
 
+        [ViewData]
+        public string Title => "Home page";
+
         public IActionResult Index()
         {
             return View();
